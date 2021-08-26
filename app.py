@@ -24,8 +24,18 @@ def depois_request(exc):
 @app.route('/')
 @app.route('/entradas')
 def exibir_entradas():
-    return render_template('exibir_entradas.html')   
+    sql = "SELECT titulo, texto FROM entradas ORDER BY id DESC"
+    cur = g.bd.execute(sql)  
+    entradas = []
+    for titulo, texto in cur.fetchall():
+        entradas.append({'titulo': titulo, 'texto': texto})
+    return render_template('exibir_entradas.html', entradas=entradas)   
 
-@app.route('/hello')
-def pagina_inicial():
-    return "Hello World"
+@app.route('/inserir')
+def inserir_entradas():
+    if not session.get('logado'):
+        abort(401)
+    sql = "INSERT INTO entradas(titulo, texto) VALUES (?,?)"
+    g.bd.execute(sql, request.form['campoTitulo'], request.form['campoTexto'])
+    g.bd.commit()
+    return redirect(url_for('exibir_entradas'))                    
